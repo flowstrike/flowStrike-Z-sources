@@ -57,7 +57,7 @@ var VEGA = (function () {
       baseUrl: mainUrl,
       logo: mainUrl + "/wp-content/uploads/2023/04/vegamovies.svg",
       type: "movie",
-      version: "1.0.0",
+      version: "2.0.0",
     };
   }
 

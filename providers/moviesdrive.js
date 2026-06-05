@@ -89,7 +89,7 @@ function getInfo() {
     baseUrl: 'https://new3.moviesdrives.my',
     logo: '',
     type: 'movie',
-    version: '1.0.0'
+    version: '2.0.0'
   };
 }
 

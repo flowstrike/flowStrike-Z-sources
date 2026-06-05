@@ -368,7 +368,7 @@ function getInfo() {
     baseUrl: 'https://moviesmod.farm',
     logo: '',
     type: 'movie',
-    version: '1.0.0'
+    version: '2.0.0'
   };
 }
 
