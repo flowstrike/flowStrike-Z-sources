@@ -439,10 +439,10 @@ var VEGA = (function () {
           if (/FSL\s*Server|FSLv2|Mega\s*Server|Download\s*File/i.test(serverName)) {
             results.push({
               url: serverUrl,
-              quality: quality ? parseInt(quality, 10) : null,
+              quality: quality ? quality + "p" : "auto",
               container: "mp4",
               headers: {},
-              kind: "direct",
+              kind: "sub",
               audioLang: "",
               subtitles: [],
             });
@@ -467,10 +467,10 @@ var VEGA = (function () {
           } else {
             results.push({
               url: serverUrl,
-              quality: quality ? parseInt(quality, 10) : null,
+              quality: quality ? quality + "p" : "auto",
               container: "mp4",
               headers: {},
-              kind: "direct",
+              kind: "sub",
               audioLang: "",
               subtitles: [],
             });
@@ -505,10 +505,10 @@ var VEGA = (function () {
       return [
         {
           url: redirect,
-          quality: quality ? parseInt(quality, 10) : null,
+          quality: quality ? quality + "p" : "auto",
           container: "mp4",
           headers: {},
-          kind: "direct",
+          kind: "sub",
           audioLang: "",
           subtitles: [],
         },
@@ -526,10 +526,10 @@ var VEGA = (function () {
       return [
         {
           url: "https://pixeldrain.com/api/file/" + pxlId,
-          quality: quality ? parseInt(quality, 10) : null,
+          quality: quality ? quality + "p" : "auto",
           container: "mp4",
           headers: {},
-          kind: "direct",
+          kind: "sub",
           audioLang: "",
           subtitles: [],
         },
@@ -558,10 +558,10 @@ var VEGA = (function () {
       return [
         {
           url: finalUrl,
-          quality: quality ? parseInt(quality, 10) : null,
+          quality: quality ? quality + "p" : "auto",
           container: "mp4",
           headers: {},
-          kind: "direct",
+          kind: "sub",
           audioLang: "",
           subtitles: [],
         },
@@ -569,7 +569,7 @@ var VEGA = (function () {
     });
   }
 
-  function getVideoSources(episodeUrl) {
+  function getVideoSources(episodeUrl, opts) {
     return initDomain().then(function () {
       if (episodeUrl.indexOf("vega://") !== 0) {
         return resolveVcloudLink(episodeUrl).then(function (links) {
@@ -638,6 +638,6 @@ function getDetail(url, opts) {
 function getEpisodes(url, opts) {
   return VEGA.getEpisodes(url, opts);
 }
-function getVideoSources(episodeUrl) {
-  return VEGA.getVideoSources(episodeUrl);
+function getVideoSources(episodeUrl, opts) {
+  return VEGA.getVideoSources(episodeUrl, opts);
 }

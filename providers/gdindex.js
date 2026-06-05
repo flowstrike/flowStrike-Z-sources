@@ -65,16 +65,16 @@ function extractEpisodeNum(name) {
 
 function getInfo() {
     return {
-        id: sourceId,
         name: sourceName,
-        type: sourceType,
         lang: sourceLang,
-        version: "1.0.0",
-        nsfw: false
+        baseUrl: mainUrl,
+        logo: '',
+        type: sourceType,
+        version: "1.0.0"
     };
 }
 
-function getHome() {
+function getHome(opts) {
     return fetchFolder("/").then(function(entries) {
         cachedFolders = entries;
         var cards = [];
@@ -95,7 +95,7 @@ function getHome() {
     });
 }
 
-function search(query) {
+function search(query, page, opts) {
     var doSearch = function() {
         return fetchFolder("/").then(function(entries) {
             cachedFolders = entries;
@@ -139,7 +139,7 @@ function search(query) {
     return doSearch();
 }
 
-function getDetail(url) {
+function getDetail(url, opts) {
     var entry = JSON.parse(url);
     return fetchFolder(entry.parentFolder + entry.name + "/").then(function(contents) {
         var subfolders = [];
@@ -172,9 +172,9 @@ function getDetail(url) {
                         var v = videos[vi];
                         var eNum = extractEpisodeNum(v.name) || (vi + 1);
                         eps.push({
-                            name: v.name,
-                            season: season.seasonNum,
-                            episode: eNum,
+                            id: 'S' + season.seasonNum + 'E' + eNum,
+                            number: eNum,
+                            title: v.name,
                             url: JSON.stringify(v)
                         });
                     }
@@ -187,9 +187,9 @@ function getDetail(url) {
                                 if (!vids[vi].isFolder && isVideoFile(vids[vi].name)) {
                                     var eNum = extractEpisodeNum(vids[vi].name) || (vi + 1);
                                     eps.push({
-                                        name: vids[vi].name,
-                                        season: season.seasonNum,
-                                        episode: eNum,
+                                        id: 'S' + season.seasonNum + 'E' + eNum,
+                                        number: eNum,
+                                        title: vids[vi].name,
                                         url: JSON.stringify(vids[vi])
                                     });
                                 }
@@ -228,18 +228,17 @@ function getDetail(url) {
     });
 }
 
-function getEpisodes(url) {
+function getEpisodes(url, opts) {
     return getDetail(url).then(function(detail) {
         return detail.episodes || [];
     });
 }
 
-function getVideoSources(url) {
+function getVideoSources(url, opts) {
     var entry = JSON.parse(url);
     var fileUrl = getEntryUrl(entry);
     var ext = entry.name.toLowerCase();
     var container = "mp4";
-    if (ext.endsWith(".mkv")) container = "mkv";
 
     return Promise.resolve([
         {

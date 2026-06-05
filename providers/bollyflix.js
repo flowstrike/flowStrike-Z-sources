@@ -31,13 +31,13 @@ function getInfo() {
 }
 
 function extractQuality(str) {
-  if (!str) return 0;
+  if (!str) return 'auto';
   var m = String(str).match(/(\d{3,4})p/i);
-  if (m) return parseInt(m[1], 10);
+  if (m) return m[1] + 'p';
   var low = String(str).toLowerCase();
-  if (low.indexOf('4k') > -1 || low.indexOf('uhd') > -1) return 2160;
-  if (low.indexOf('2k') > -1) return 1440;
-  return 0;
+  if (low.indexOf('4k') > -1 || low.indexOf('uhd') > -1) return '2160p';
+  if (low.indexOf('2k') > -1) return '1440p';
+  return 'auto';
 }
 
 function bytesToStr(bytes) {
@@ -496,14 +496,14 @@ function resolveDownloadLink(url) {
       quality: quality,
       container: 'mp4',
       headers: { 'User-Agent': UA },
-      kind: 'video',
+      kind: 'sub',
       audioLang: '',
       subtitles: []
     }];
   }).catch(function() { return []; });
 }
 
-function getVideoSources(episodeUrl) {
+function getVideoSources(episodeUrl, opts) {
   if (!episodeUrl || episodeUrl.indexOf('bflix://') !== 0) return Promise.resolve([]);
 
   var links;
@@ -582,7 +582,7 @@ function extractGDFlix(url) {
             quality: serverQuality,
             container: 'mp4',
             headers: { 'User-Agent': UA, 'Referer': url },
-            kind: 'video',
+            kind: 'sub',
             audioLang: '',
             subtitles: []
           });
@@ -599,7 +599,7 @@ function extractGDFlix(url) {
           quality: quality || extractQuality(dlM[1]),
           container: 'mp4',
           headers: { 'User-Agent': UA, 'Referer': url },
-          kind: 'video',
+          kind: 'sub',
           audioLang: '',
           subtitles: []
         });
@@ -615,7 +615,7 @@ function extractGDFlix(url) {
           quality: quality,
           container: 'mp4',
           headers: { 'User-Agent': UA, 'Referer': url },
-          kind: 'video',
+          kind: 'sub',
           audioLang: '',
           subtitles: []
         });
@@ -663,7 +663,7 @@ function resolveFastCloud(url, quality, referer) {
         quality: quality || extractQuality(m[1]),
         container: 'mp4',
         headers: { 'User-Agent': UA, 'Referer': url },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       });
@@ -680,7 +680,7 @@ function resolveFastCloud(url, quality, referer) {
             quality: quality,
             container: 'mp4',
             headers: { 'User-Agent': UA, 'Referer': url },
-            kind: 'video',
+            kind: 'sub',
             audioLang: '',
             subtitles: []
           });
@@ -704,7 +704,7 @@ function resolveInstantDl(url, quality, referer) {
         quality: quality,
         container: 'mp4',
         headers: { 'User-Agent': UA },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       }];
@@ -718,7 +718,7 @@ function resolveInstantDl(url, quality, referer) {
         quality: quality,
         container: 'mp4',
         headers: { 'User-Agent': UA },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       }];
@@ -729,7 +729,7 @@ function resolveInstantDl(url, quality, referer) {
       quality: quality,
       container: 'mp4',
       headers: { 'User-Agent': UA, 'Referer': referer },
-      kind: 'video',
+      kind: 'sub',
       audioLang: '',
       subtitles: []
     }];
@@ -749,7 +749,7 @@ function resolveFastDl(url) {
         quality: extractQuality(location),
         container: 'mp4',
         headers: { 'User-Agent': UA },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       }];
@@ -763,7 +763,7 @@ function resolveFastDl(url) {
         quality: extractQuality(m[1]),
         container: 'mp4',
         headers: { 'User-Agent': UA },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       }];
@@ -777,7 +777,7 @@ function resolveFastDl(url) {
         quality: extractQuality(fM[1]),
         container: 'mp4',
         headers: { 'User-Agent': UA },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       }];
@@ -785,10 +785,10 @@ function resolveFastDl(url) {
 
     return [{
       url: url,
-      quality: 0,
+      quality: 'auto',
       container: 'mp4',
       headers: { 'User-Agent': UA },
-      kind: 'video',
+      kind: 'sub',
       audioLang: '',
       subtitles: []
     }];
@@ -808,7 +808,7 @@ function extractHubCloud(url) {
         quality: extractQuality(m[1]),
         container: 'mp4',
         headers: { 'User-Agent': UA, 'Referer': url },
-        kind: 'video',
+        kind: 'sub',
         audioLang: '',
         subtitles: []
       });
@@ -822,10 +822,10 @@ function extractHubCloud(url) {
         if (href.indexOf('gdflix') > -1 || href.indexOf('gdlink') > -1 || href.indexOf('fastdlserver') > -1) {
           sources.push({
             url: href,
-            quality: 0,
+            quality: 'auto',
             container: 'mp4',
             headers: { 'User-Agent': UA, 'Referer': url },
-            kind: 'video',
+            kind: 'sub',
             audioLang: '',
             subtitles: []
           });

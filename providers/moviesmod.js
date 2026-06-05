@@ -62,12 +62,29 @@ function _cleanTitle(t) {
 }
 
 function _quality(name) {
-  if (/2160[pP]|4[kK]/.test(name)) return 2160;
-  if (/1080[pP]/.test(name)) return 1080;
-  if (/720[pP]/.test(name)) return 720;
-  if (/480[pP]/.test(name)) return 480;
-  if (/360[pP]/.test(name)) return 360;
-  return 0;
+  if (/2160[pP]|4[kK]/.test(name)) return '2160p';
+  if (/1080[pP]/.test(name)) return '1080p';
+  if (/720[pP]/.test(name)) return '720p';
+  if (/480[pP]/.test(name)) return '480p';
+  if (/360[pP]/.test(name)) return '360p';
+  return '720p';
+}
+
+function _containerFromUrl(url) {
+  if (/\.m3u8(\?|$)/i.test(url)) return 'hls';
+  return 'mp4';
+}
+
+function _makeSource(url, quality) {
+  return {
+    url: url,
+    quality: quality || '720p',
+    container: _containerFromUrl(url),
+    headers: { 'User-Agent': UA },
+    kind: 'sub',
+    audioLang: '',
+    subtitles: []
+  };
 }
 
 function _extractImdb(html) {
@@ -143,11 +160,12 @@ function _parseEpisodesFromPage(url, seasonNum) {
         var epMatch = epText.match(/episode\s+(\d+)/i);
 
         if (epMatch) {
+          var epNum = parseInt(epMatch[1], 10);
           episodes.push({
-            season: currentSeason,
-            episode: parseInt(epMatch[1], 10),
+            id: 'S' + currentSeason + 'E' + epNum,
+            number: epNum,
             title: epText,
-            href: epHref
+            url: epHref
           });
         }
       }
@@ -160,11 +178,12 @@ function _parseEpisodesFromPage(url, seasonNum) {
         var aText = htmlText(_regexMatch(allLinks[i], /<a[^>]*>([\s\S]*?)<\/a>/i, 1) || '').trim();
         var epM = aText.match(/episode\s+(\d+)/i);
         if (epM) {
+          var epNum2 = parseInt(epM[1], 10);
           episodes.push({
-            season: currentSeason,
-            episode: parseInt(epM[1], 10),
+            id: 'S' + currentSeason + 'E' + epNum2,
+            number: epNum2,
             title: aText,
-            href: absUrl(_decodeHtml(aHref), url.match(/https?:\/\/[^\/]+/i)[0])
+            url: absUrl(_decodeHtml(aHref), url.match(/https?:\/\/[^\/]+/i)[0])
           });
         }
       }
@@ -210,13 +229,13 @@ function _fetchDriveleechLinks(url) {
       var label = 'Moviesmod ' + btnText + (fileName ? ' ' + fileName : '') + (fileSize ? ' [' + fileSize + ']' : '');
 
       if (btnText === 'Cloud Download') {
-        sources.push({ url: href, quality: quality, label: label });
+        sources.push(_makeSource(href, quality));
       } else if (btnText === 'Instant Download') {
         deferred.push(
           _get(href).then(function(body) {
             var urlParam = _regexMatch(body, /[?&]url=([^&"'\s]+)/i, 1);
             if (urlParam) {
-              return { url: decodeURIComponent(urlParam), quality: quality, label: label };
+              return _makeSource(decodeURIComponent(urlParam), quality);
             }
             return null;
           }).catch(function() { return null; })
@@ -229,7 +248,7 @@ function _fetchDriveleechLinks(url) {
             var result = [];
             for (var j = 0; j < dLinks.length; j++) {
               var dUrl = _regexMatch(dLinks[j], /href="([^"]+)"/i, 1);
-              if (dUrl) result.push({ url: absUrl(_decodeHtml(dUrl), baseHost), quality: quality, label: label });
+              if (dUrl) result.push(_makeSource(absUrl(_decodeHtml(dUrl), baseHost), quality));
             }
             return result;
           }).catch(function() { return []; })
@@ -241,7 +260,7 @@ function _fetchDriveleechLinks(url) {
             var result = [];
             for (var k = 0; k < rcLinks.length; k++) {
               var rcUrl = _regexMatch(rcLinks[k], /href="([^"]+)"/i, 1);
-              if (rcUrl) result.push({ url: absUrl(_decodeHtml(rcUrl), baseHost), quality: quality, label: label });
+              if (rcUrl) result.push(_makeSource(absUrl(_decodeHtml(rcUrl), baseHost), quality));
             }
             return result;
           }).catch(function() { return []; })
@@ -260,7 +279,7 @@ function _fetchDriveleechLinks(url) {
             var result = [];
             for (var c = 0; c < cfLinks.length; c++) {
               var cfHref = _regexMatch(cfLinks[c], /href="([^"]+)"/i, 1);
-              if (cfHref) result.push({ url: absUrl(_decodeHtml(cfHref), baseHost), quality: quality, label: 'Moviesmod CF Backup' + (fileName ? ' ' + fileName : '') + (fileSize ? ' [' + fileSize + ']' : '') });
+              if (cfHref) result.push(_makeSource(absUrl(_decodeHtml(cfHref), baseHost), quality));
             }
             return result;
           }).catch(function() { return []; })
@@ -318,7 +337,7 @@ function _fetchVideoFromLink(linkUrl) {
     var sources = [];
     var directVideo = html.match(/href="(https?:\/\/[^"]*\.(?:mp4|mkv|m3u8)[^"]*)"/i);
     if (directVideo) {
-      sources.push({ url: directVideo[1], quality: _quality(directVideo[1]), label: 'Moviesmod Direct' });
+      sources.push(_makeSource(directVideo[1], _quality(directVideo[1])));
     }
 
     if (btnPromises.length === 0) return sources;
@@ -344,12 +363,12 @@ function _getButtons(html) {
 
 function getInfo() {
   return {
-    id: 'moviesmod',
     name: 'Moviesmod',
-    version: '1.0.0',
-    type: 'movie',
     lang: 'en',
-    nsfw: false
+    baseUrl: 'https://moviesmod.farm',
+    logo: '',
+    type: 'movie',
+    version: '1.0.0'
   };
 }
 
@@ -411,51 +430,80 @@ function getHome(opts) {
   });
 }
 
+function _extractGenres(html) {
+  var genres = [];
+  var re = /<a[^>]+href="[^"]*\/genre\/[^"]*"[^>]*>([\s\S]*?)<\/a>/gi;
+  var m;
+  while ((m = re.exec(html)) !== null) {
+    var g = htmlText(m[1]).trim();
+    if (g && genres.indexOf(g) === -1) genres.push(g);
+  }
+  if (genres.length === 0) {
+    var tagRe = /<a[^>]+rel="tag"[^>]*>([\s\S]*?)<\/a>/gi;
+    while ((m = tagRe.exec(html)) !== null) {
+      var t = htmlText(m[1]).trim();
+      if (t && genres.indexOf(t) === -1) genres.push(t);
+    }
+  }
+  return genres;
+}
+
+function _extractYear(html) {
+  var m = html.match(/\b(19\d{2}|20\d{2})\b/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 function getDetail(url, opts) {
   return _get(url).then(function(html) {
     var base = _mainUrl || FALLBACK_URL;
-    var detail = {
-      title: '',
-      poster: '',
-      description: '',
-      imdbId: '',
-      isSeries: false,
-      type: 'movie',
-      url: url
-    };
+    var isSeries = _isSeries(html);
 
     var title = _extractMeta(html, 'og:title');
     if (title) title = _cleanTitle(_decodeHtml(title));
-    detail.title = title || '';
+    title = title || '';
 
     var poster = _extractMeta(html, 'og:image');
-    if (poster) detail.poster = absUrl(_decodeHtml(poster), base);
+    var cover = poster ? absUrl(_decodeHtml(poster), base) : '';
 
     var descMatch = html.match(/<div[^>]+class="[^"]*imdbwp__teaser[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-    if (descMatch) detail.description = htmlText(descMatch[1]).trim();
+    var description = descMatch ? htmlText(descMatch[1]).trim() : '';
 
-    detail.imdbId = _extractImdb(html);
-    detail.isSeries = _isSeries(html);
-    detail.type = detail.isSeries ? 'series' : 'movie';
+    var imdbId = _extractImdb(html);
+    var genreList = _extractGenres(html);
+    var yearValue = _extractYear(html);
 
-    if (detail.imdbId) {
-      var metaType = detail.isSeries ? 'series' : 'movie';
-      var metaUrl = CINEMETA + '/meta/' + metaType + '/' + detail.imdbId + '.json';
+    if (imdbId) {
+      var metaType = isSeries ? 'series' : 'movie';
+      var metaUrl = CINEMETA + '/meta/' + metaType + '/' + imdbId + '.json';
 
       return _get(metaUrl).then(function(body) {
         try {
           var metaJson = JSON.parse(body);
           if (metaJson && metaJson.meta) {
-            if (!detail.title && metaJson.meta.name) detail.title = metaJson.meta.name;
-            if (!detail.poster && metaJson.meta.poster) detail.poster = metaJson.meta.poster;
-            if (!detail.description && metaJson.meta.description) detail.description = metaJson.meta.description;
+            if (!title && metaJson.meta.name) title = metaJson.meta.name;
+            if (!cover && metaJson.meta.poster) cover = metaJson.meta.poster;
+            if (!description && metaJson.meta.description) description = metaJson.meta.description;
           }
         } catch (e) {}
-        return detail;
-      }).catch(function() { return detail; });
+        return {
+          id: url, title: title, cover: cover, url: url, description: description,
+          status: 'unknown', genres: genreList, studios: [], type: 'movie',
+          sourceId: SOURCE_ID, episodes: [], year: yearValue, subCount: 0, dubCount: 0
+        };
+      }).catch(function() {
+        return {
+          id: url, title: title, cover: cover, url: url, description: description,
+          status: 'unknown', genres: genreList, studios: [], type: 'movie',
+          sourceId: SOURCE_ID, episodes: [], year: yearValue, subCount: 0, dubCount: 0
+        };
+      });
     }
 
-    return detail;
+    return {
+      id: url, title: title, cover: cover, url: url, description: description,
+      status: 'unknown', genres: genreList, studios: [], type: 'movie',
+      sourceId: SOURCE_ID, episodes: [], year: yearValue, subCount: 0, dubCount: 0
+    };
   });
 }
 
@@ -499,11 +547,12 @@ function getEpisodes(url, opts) {
           var epHref = _decodeHtml(am[1]);
           var epMatch = epText.match(/episode\s+(\d+)/i);
           if (epMatch) {
+            var epNum3 = parseInt(epMatch[1], 10);
             episodes.push({
-              season: sNum,
-              episode: parseInt(epMatch[1], 10),
+              id: 'S' + sNum + 'E' + epNum3,
+              number: epNum3,
               title: epText,
-              href: absUrl(epHref, url.match(/https?:\/\/[^\/]+/i)[0])
+              url: absUrl(epHref, url.match(/https?:\/\/[^\/]+/i)[0])
             });
           }
         }
@@ -542,7 +591,7 @@ function getEpisodes(url, opts) {
   });
 }
 
-function getVideoSources(episodeUrl) {
+function getVideoSources(episodeUrl, opts) {
   var decodedUrl = episodeUrl;
 
   if (episodeUrl.indexOf('mmod://') === 0) {
@@ -551,7 +600,7 @@ function getVideoSources(episodeUrl) {
       var jsonStr = decodeURIComponent(encoded);
       var hrefs = JSON.parse(jsonStr);
       if (Array.isArray(hrefs)) {
-        var promises = hrefs.map(function(h) { return getVideoSources(h); });
+        var promises = hrefs.map(function(h) { return getVideoSources(h, opts); });
         return Promise.all(promises.map(function(p) { return p.catch(function() { return []; }); })).then(function(all) {
           var result = [];
           for (var i = 0; i < all.length; i++) {
@@ -579,14 +628,14 @@ function getVideoSources(episodeUrl) {
       if (/driveleech|driveseed/i.test(redirUrl)) {
         return _fetchDriveleechLinks(redirUrl);
       }
-      return getVideoSources(redirUrl);
+      return getVideoSources(redirUrl, opts);
     }
 
     var maxBtns = html.match(/<a[^>]+class="[^"]*(?:maxbutton-1|maxbutton-5|maxbutton-download-links)[^"]*"[^>]+href="([^"]+)"/gi) || [];
     var btnPromises = [];
     for (var i = 0; i < maxBtns.length; i++) {
       var href = _regexMatch(maxBtns[i], /href="([^"]+)"/i, 1);
-      if (href) btnPromises.push(getVideoSources(absUrl(_decodeHtml(href), host)));
+        if (href) btnPromises.push(getVideoSources(absUrl(_decodeHtml(href), host), opts));
     }
 
     var sources = [];

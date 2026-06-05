@@ -29,13 +29,13 @@ function _get(url, ref) {
 }
 
 function extractQuality(str) {
-  if (!str) return 0;
+  if (!str) return 'auto';
   var m = String(str).match(/(\d{3,4})p/i);
-  if (m) return parseInt(m[1], 10);
+  if (m) return m[1] + 'p';
   var low = String(str).toLowerCase();
-  if (low.indexOf('4k') > -1 || low.indexOf('uhd') > -1) return 2160;
-  if (low.indexOf('2k') > -1) return 1440;
-  return 0;
+  if (low.indexOf('4k') > -1 || low.indexOf('uhd') > -1) return '2160p';
+  if (low.indexOf('2k') > -1) return '1440p';
+  return 'auto';
 }
 
 function cleanTitle(t) {
@@ -400,7 +400,7 @@ function extractHubcloudSources(url) {
               quality: quality,
               container: 'mp4',
               headers: { 'User-Agent': UA, 'Referer': videoUrl },
-              kind: 'video',
+              kind: 'sub',
               audioLang: '',
               subtitles: []
             });
@@ -415,7 +415,7 @@ function extractHubcloudSources(url) {
                   quality: quality,
                   container: 'mp4',
                   headers: { 'User-Agent': UA },
-                  kind: 'video',
+                  kind: 'sub',
                   audioLang: '',
                   subtitles: []
                 };
@@ -430,7 +430,7 @@ function extractHubcloudSources(url) {
               quality: quality,
               container: 'mp4',
               headers: { 'User-Agent': UA, 'Referer': videoUrl },
-              kind: 'video',
+              kind: 'sub',
               audioLang: '',
               subtitles: []
             });
@@ -490,7 +490,7 @@ function extractGdflixSources(url) {
           quality: quality,
           container: 'mp4',
           headers: { 'User-Agent': UA, 'Referer': url },
-          kind: 'video',
+          kind: 'sub',
           audioLang: '',
           subtitles: []
         });
@@ -509,7 +509,7 @@ function extractGdflixSources(url) {
               quality: quality,
               container: 'mp4',
               headers: { 'User-Agent': UA },
-              kind: 'video',
+              kind: 'sub',
               audioLang: '',
               subtitles: []
             };
@@ -524,7 +524,7 @@ function extractGdflixSources(url) {
           quality: quality,
           container: 'mp4',
           headers: { 'User-Agent': UA, 'Referer': url },
-          kind: 'video',
+          kind: 'sub',
           audioLang: '',
           subtitles: []
         });
@@ -542,7 +542,7 @@ function extractGdflixSources(url) {
   }).catch(function() { return []; });
 }
 
-function getVideoSources(episodeUrl) {
+function getVideoSources(episodeUrl, opts) {
   if (!episodeUrl) return Promise.resolve([]);
 
   var links;
