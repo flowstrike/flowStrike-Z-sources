@@ -303,15 +303,14 @@ function getDetail(url, opts) {
       var isSeries = /episode|season|series/i.test(title);
       var mediaType = isSeries ? 'series' : 'movie';
 
+      var yearFromTitle = title.match(/\b((?:19|20)\d{2})\b/);
+      var fallbackYear = yearFromTitle ? parseInt(yearFromTitle[1], 10) : null;
+
       return fetchAiometa(imdbId, mediaType).then(function(meta) {
         var finalTitle = (meta && meta.name) ? meta.name : title;
         var finalCover = poster || (meta && meta.poster) || '';
         var finalDesc = (meta && meta.description) || '';
-        var year = null;
-        if (meta && meta.year) {
-          var yStr = String(meta.year);
-          year = parseInt(yStr.split('-')[0].split('\u2013')[0], 10);
-        }
+        var year = meta && meta.year ? parseInt(String(meta.year).split('-')[0].split('\u2013')[0], 10) : fallbackYear;
 
         var episodesFn = isSeries ? buildSeriesEpisodes : buildMovieEpisodes;
         return episodesFn(html, dom.main).then(function(episodes) {
@@ -321,10 +320,10 @@ function getDetail(url, opts) {
             cover: finalCover,
             url: url,
             description: finalDesc,
-            status: '',
+            status: 'unknown',
             genres: [],
             studios: [],
-            type: mediaType,
+            type: 'movie',
             sourceId: SOURCE_ID,
             episodes: episodes,
             year: year,

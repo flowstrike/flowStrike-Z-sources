@@ -450,7 +450,7 @@ function _extractGenres(html) {
 
 function _extractYear(html) {
   var m = html.match(/\b(19\d{2}|20\d{2})\b/);
-  return m ? parseInt(m[1], 10) : 0;
+    return m ? parseInt(m[1], 10) : null;
 }
 
 function getDetail(url, opts) {

@@ -205,7 +205,7 @@ var VEGA = (function () {
         cover: poster,
         url: url,
         description: description,
-        status: "",
+        status: "unknown",
         genres: [],
         studios: [],
         type: isSeries ? "series" : "movie",
