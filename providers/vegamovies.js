@@ -208,7 +208,7 @@ var VEGA = (function () {
         status: "unknown",
         genres: [],
         studios: [],
-        type: isSeries ? "series" : "movie",
+        type: "movie",
         sourceId: "vegamovies",
         episodes: [],
         year: year,
