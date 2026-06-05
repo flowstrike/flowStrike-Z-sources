@@ -6,9 +6,11 @@ var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
   + '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 function getInfo() {
-  return { name: 'Eporner', lang: 'en', baseUrl: BASE,
+  return {
+    name: 'Eporner', lang: 'en', baseUrl: BASE,
     logo: 'https://raw.githubusercontent.com/phisher98/TVVVV/main/eporner.ico',
-    type: 'movie', version: '1.0.0' };
+    type: 'movie', version: '1.0.1'
+  };
 }
 
 function _trim(s) { return String(s == null ? '' : s).replace(/^\s+|\s+$/g, ''); }
@@ -29,16 +31,18 @@ function _cleanTitle(raw) {
 }
 
 function _cards(html) {
+  if (!html) return [];
   var out = [], seen = {};
   var blocks = html.split(/class="mb[\s"]/);
   for (var i = 1; i < blocks.length; i++) {
     var block = blocks[i];
     var hrefM = block.match(/href="(\/video-[^"]+)"/i);
-    var titleM = block.match(/class="mbtit"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i);
-    var imgM = block.match(/<img[^>]+src="(https?:\/\/[^"]+\.jpg[^"]*)"/i);
     if (!hrefM) continue;
     var url = absUrl(hrefM[1], BASE);
-    if (seen[url] || !url) continue; seen[url] = 1;
+    if (seen[url] || !url) continue;
+    seen[url] = 1;
+    var titleM = block.match(/class="mbtit"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i);
+    var imgM = block.match(/<img[^>]+src="(https?:\/\/[^"]+\.jpg[^"]*)"/i);
     var title = titleM ? _cleanTitle(titleM[1]) : 'Untitled';
     var cover = imgM ? imgM[1] : null;
     out.push({
@@ -58,23 +62,31 @@ function search(query, page, opts) {
 
 function getHome(opts) {
   var rows = [
-    { title: 'Recent', path: '' },
-    { title: 'Best Videos', path: 'best-videos' },
-    { title: 'Top Rated', path: 'top-rated' },
-    { title: 'Most Viewed', path: 'most-viewed' },
-    { title: '1080p', path: 'cat/hd-1080p' },
-    { title: '4K', path: 'cat/4k-porn' }
+    { title: 'Recent', url: BASE + '/' },
+    { title: 'Best Videos', url: BASE + '/best-videos/1/' },
+    { title: 'Top Rated', url: BASE + '/top-rated/1/' },
+    { title: 'Most Viewed', url: BASE + '/most-viewed/1/' },
+    { title: '1080p', url: BASE + '/cat/hd-1080p/1/' },
+    { title: '4K', url: BASE + '/cat/4k-porn/1/' }
   ];
   return Promise.all(rows.map(function (row) {
-    var url = row.path ? (BASE + '/' + row.path + '/1/') : (BASE + '/');
-    return _get(url).then(function (html) {
-      return { title: row.title, items: _cards(html) };
-    }).catch(function () { return { title: row.title, items: [] }; });
-  })).catch(function () { return []; });
+    return _get(row.url).then(function (html) {
+      var items = _cards(html);
+      return { title: row.title, items: items };
+    }).catch(function () {
+      return { title: row.title, items: [] };
+    });
+  })).then(function (sections) {
+    var nonEmpty = [];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].items.length > 0) nonEmpty.push(sections[i]);
+    }
+    return nonEmpty.length > 0 ? nonEmpty : sections;
+  }).catch(function () { return []; });
 }
 
 function _hexToBase36(hex) {
-  if (hex.length < 32) return '';
+  if (!hex || hex.length < 32) return '';
   var chars = '0123456789abcdefghijklmnopqrstuvwxyz';
   function fromHex(h) {
     var n = 0;
