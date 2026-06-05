@@ -155,7 +155,7 @@ function getDetail(url, opts) {
 }
 
 function _buildEpisodes(detailUrl, html, isSeries) {
-  if (!isSeries) return _movieEpisodes(html);
+  if (!isSeries) return Promise.resolve(_movieEpisodes(html));
   return _seriesEpisodes(detailUrl, html);
 }
 
