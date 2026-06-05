@@ -1,42 +1,5 @@
 {
   "name": "CSX Zangetsu Providers",
   "description": "CloudStream CSX sources converted for the Zangetsu app.",
-  "sources": [
-    {
-      "id": "bollyflix",
-      "name": "BollyFlix",
-      "version": "2.0.0",
-      "type": "movie",
-      "lang": "hi",
-      "file": "providers/bollyflix.js",
-      "nsfw": false
-    },
-    {
-      "id": "vegamovies",
-      "name": "VegaMovies",
-      "version": "2.0.0",
-      "type": "movie",
-      "lang": "hi",
-      "file": "providers/vegamovies.js",
-      "nsfw": false
-    },
-    {
-      "id": "moviesmod",
-      "name": "Moviesmod",
-      "version": "2.0.0",
-      "type": "movie",
-      "lang": "en",
-      "file": "providers/moviesmod.js",
-      "nsfw": false
-    },
-    {
-      "id": "moviesdrive",
-      "name": "MoviesDrive",
-      "version": "2.0.0",
-      "type": "movie",
-      "lang": "hi",
-      "file": "providers/moviesdrive.js",
-      "nsfw": false
-    }
-  ]
+  "sources": []
 }
